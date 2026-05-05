@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <link rel="stylesheet" href="css/style.css" />
+  <title>今天该吃什么？</title>
+</head>
+<body>
+  <nav class="nav page">
+  <a class="logo" href="index.html" aria-label="回到首页">
+    <span class="logo-badge">🍜</span>
+    <span>今天该吃什么？</span>
+  </a>
+  <div class="nav-links">
+    <a href="index.html" data-nav="home">首页</a>
+    <a href="status-recommendation.html" data-nav="status">状态推荐</a>
+    <a href="random-recommendation.html" data-nav="random">随机推荐</a>
+    <a href="profile.html" data-nav="profile">个人中心</a>
+  </div>
+</nav>
+
+  <main class="page">
+    <section class="hero">
+      <div class="hero-card">
+        <span class="kicker">小C帮你想想该吃什么~</span>
+        <h1>今天该吃什么？</h1>
+        <p class="lead">根据身体状态、饥饿程度、所在片区、价格预算和口味偏好，从食堂和周边商圈里找出最适合的一餐哟ovo</p>
+        <div class="actions">
+          <a class="btn btn-primary" href="status-recommendation.html">开始选择今天的状态 →</a>
+          <a class="btn btn-secondary" href="random-recommendation.html">随机来一份 🎲</a>
+        </div>
+      </div>
+
+      <div class="illustration-card">
+        <div class="food-cloud" aria-hidden="true">
+           <span class="sparkle s1">✦</span>
+            <span class="sparkle s2">♡</span>
+            <span class="sparkle s3">✧</span>
+           <span class="sparkle s4">✦</span>
+
+            <div class="food-doodle cake"></div>
+           <div class="food-doodle noodles"></div>
+           <div class="food-doodle riceball"></div>
+           <div class="food-doodle drink"></div>
+           <div class="food-doodle dumpling"></div>
+            <div class="food-doodle fish"></div>
+            <div class="food-doodle egg"></div>
+            <div class="food-doodle cat"></div>
+        </div>
+
+      </div>
+    </section>
+
+    <section class="section search-card">
+      <input class="search-input" id="search-keyword" type="text" placeholder="输入关键词，如：饺子 / 米线 / 沙拉 / 咖啡" />
+      <button class="btn btn-primary" onclick="searchFood()">搜索</button>
+    </section>
+
+    <section class="section panel">
+      <div class="panel-head">
+        <div>
+          <h2>我现在最想：</h2>
+          <p class="subtle">完成完整的选择后将进入状态推荐页，这些推荐都基于小C手动收集的数据库，无法覆盖全部美食，请见谅0.0</p>
+        </div>
+        <a class="btn btn-green" href="status-recommendation.html">进入完整选择</a>
+      </div>
+
+      <div class="grid-2">
+        <div class="group">
+          <p class="group-label">此时此刻我的身体状态是：</p>
+          <div class="chip-grid">
+            <a class="chip" href="status-recommendation.html?quick=fat_loss">🥗 减脂中...</a>
+            <a class="chip" href="status-recommendation.html?quick=stomach_easy">🍲 胃想舒服一点</a>
+            <a class="chip" href="status-recommendation.html?quick=tired">🌙 好累呀</a>
+            <a class="chip" href="status-recommendation.html?quick=hot_food">♨️ 想吃热乎的</a>
+            <a class="chip" href="status-recommendation.html?quick=sweet">🍰 想吃甜的~</a>
+            <a class="chip" href="status-recommendation.html?quick=spicy">🌶️ 想吃重口味</a>
+          </div>
+        </div>
+
+        <div class="group">
+          <p class="group-label">📍 此时此刻我在：</p>
+          <p class="subtle">小C会先问你离哪个楼最近->按照离你最近的食堂片区和商圈排序。</p>
+          <div class="chip-grid">
+            <span class="chip">教学楼附近 → 中区 / 东区</span>
+            <span class="chip">知行附近 → 知行地下 / 北区</span>
+            <span class="chip">东风立德附近 → 东区 / 中区</span>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="section grid-3">
+      <a class="feature-card" href="status-recommendation.html">
+        <div class="icon-round">🥗</div>
+        <h3>状态推荐</h3>
+        <p class="subtle">按身体状态、饥饿程度、所在片区、价格预算和口味偏好进行标签匹配。</p>
+      </a>
+      <a class="feature-card" href="random-recommendation.html">
+        <div class="icon-round">🎲</div>
+        <h3>随机推荐</h3>
+        <p class="subtle">推荐结果不满意？有只小猫会用梅花易数帮你算上一卦！但仍然会尊重你选择的基础偏好哦</p>
+      </a>
+      <a class="feature-card" href="profile.html">
+        <div class="icon-round">💌</div>
+        <h3>个人中心</h3>
+        <p class="subtle">管理收藏、近期推荐和长期饮食偏好，一片等待建设的空地，目前为小猫bb的活动地。</p>
+      </a>
+    </section>
+  </main>
+
+  <footer class="footer page">
+  <div class="soft-divider"></div>
+  <p>♡ 今天也要好好吃饭！！ ♡</p>
+</footer>
+
+  <script src="js/food-data.js"></script>
+  <script src="js/recommend-engine.js"></script>
+  <script>
+    document.querySelector('[data-nav="home"]').classList.add('active');
+
+    function searchFood() {
+      const keyword = document.getElementById('search-keyword').value.trim();
+      if (!keyword) {
+        alert('请输入搜索关键词');
+        return;
+      }
+      localStorage.setItem('searchKeyword', keyword);
+      window.location.href = 'search-result.html';
+    }
+
+    document.getElementById('search-keyword').addEventListener('keydown', function(e) {
+      if (e.key === 'Enter') searchFood();
+    });
+  </script>
+</body>
+</html>

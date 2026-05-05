@@ -1,0 +1,22 @@
+1.在data里面那个Excel修改
+2.运行脚本
+-双击这个文件：run_update_food_data.bat
+
+-或者在 Positron 终端里运行：python update_food_data.py
+
+如果你的电脑是 Windows，有时要用：
+py update_food_data.py
+
+3.刷新网页
+
+运行成功后，它会自动更新：js/food-data.js
+你打开网页，按：Ctrl + F5
+强制刷新即可。
+
+这个脚本会自动做这些事：
+
+读取最新 Excel
+→ 重新生成 js/food-data.js
+→ 清理商圈代表菜里的代金券/优惠券/餐券
+→ 生成 voucher_cleanup_report.csv
+→ 生成 voucher_cleanup_report.md

@@ -1,0 +1,410 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <link rel="stylesheet" href="css/style.css" />
+  <title>小猫抽签随机推荐｜今天该吃什么？</title>
+</head>
+<body>
+  <nav class="nav page">
+    <a class="logo" href="index.html" aria-label="回到首页">
+      <span class="logo-badge">🍜</span>
+      <span>今天该吃什么？</span>
+    </a>
+    <div class="nav-links">
+      <a href="index.html" data-nav="home">首页</a>
+      <a href="status-recommendation.html" data-nav="status">状态推荐</a>
+      <a href="random-recommendation.html" data-nav="random">随机推荐</a>
+      <a href="profile.html" data-nav="profile">个人中心</a>
+    </div>
+  </nav>
+
+  <main class="page">
+    <section class="result-hero oracle-hero cat-hero">
+      <span class="kicker">🐾 小猫抽签 · 随机一餐</span>
+      <h1 style="font-size: clamp(36px, 5vw, 58px);">让小猫替你抽一支小鱼签</h1>
+      <p class="lead">小猫会考虑你的两个现实条件：你的位置&今日预算。其余交给此时此刻的运势——小猫将为你算出这一餐的灵感~</p>
+    </section>
+
+    <section class="panel section oracle-panel">
+      <div class="panel-head">
+        <div>
+          <h2>现有两个问题需要你回答：</h2>
+          <p class="subtle">随机推荐也要实事求是(*^▽^*)</p>
+        </div>
+        <span class="kicker">吃堂食哦 ， 少吃外卖</span>
+      </div>
+      <div class="ritual-selects">
+        <label>
+          <span>此时此刻我在：</span>
+          <select id="building-select"></select>
+        </label>
+        <label>
+          <span>今日预算大概是：</span>
+          <select id="budget-select"></select>
+        </label>
+        <button class="btn btn-primary" id="divine-btn" onclick="startDivination()">让小猫抽签 ✨</button>
+      </div>
+    </section>
+
+    <section class="section fish-draw-shell" id="fish-shell">
+      <div class="oracle-card cat-oracle-card cat-oracle-wide">
+        <span class="kicker" id="gua-kicker">等待ing</span>
+        <h2 id="gua-title">点击按钮，让小猫替你抽签</h2>
+        <p class="subtle" id="gua-text">打开萌萌的小鱼签，里面是来自梅花易数的灵感。小猫会把这支签翻译成今天的吃饭运势，小猫也会失误，仅供参考哦~</p>
+
+        <div class="plum-box" id="plum-box">
+          <div class="plum-branch plum-branch-left" aria-hidden="true"></div>
+          <div class="plum-branch plum-branch-right" aria-hidden="true"></div>
+          <div class="plum-seal">梅花签意</div>
+          <div class="gua-flight" id="gua-flight" aria-hidden="true">
+            <div class="gua-flight-ring ring-1"></div>
+            <div class="gua-flight-ring ring-2"></div>
+            <div class="gua-flight-symbol gua-upper" id="gua-upper">☶</div>
+            <div class="gua-flight-symbol gua-lower" id="gua-lower">☰</div>
+            <div class="gua-flight-text" id="gua-flight-text">梅花卦象正在酝酿中…</div>
+          </div>
+          <div class="plum-meta" id="plum-meta">未启封</div>
+          <div class="plum-main" id="plum-main">外签未开，小猫还没有翻到内里的梅花签意。</div>
+          <div class="plum-verse" id="plum-verse">抽签之后，这里会出现“本次梅花灵感”和“小猫解签”。</div>
+          <div class="cat-interpret" id="cat-interpret">猫咪解签：今天先别急，等我帮你把签翻出来喵。</div>
+        </div>
+
+        <div class="fish-strip-block">
+          <div class="fish-strip-head">
+            <span class="kicker">今日可落六签</span>
+            <span class="fish-strip-note">本小时内卦象固定，小猫抽到的签也会保持一致。</span>
+          </div>
+          <div class="fish-board fish-board-inline" id="fish-board">
+            <div class="fish-grid fish-grid-inline" id="fish-grid">
+              <button class="fish-tag" data-mood="abundant" type="button" aria-label="丰盛签">
+                <span class="fish-body peach">
+                  <span class="fish-eye"></span>
+                  <span class="fish-label">丰盛签</span>
+                </span>
+              </button>
+              <button class="fish-tag" data-mood="comfort" type="button" aria-label="暖胃签">
+                <span class="fish-body butter">
+                  <span class="fish-eye"></span>
+                  <span class="fish-label">暖胃签</span>
+                </span>
+              </button>
+              <button class="fish-tag" data-mood="fresh" type="button" aria-label="清爽签">
+                <span class="fish-body mint">
+                  <span class="fish-eye"></span>
+                  <span class="fish-label">清爽签</span>
+                </span>
+              </button>
+              <button class="fish-tag" data-mood="spicy" type="button" aria-label="解馋签">
+                <span class="fish-body rose">
+                  <span class="fish-eye"></span>
+                  <span class="fish-label">解馋签</span>
+                </span>
+              </button>
+              <button class="fish-tag" data-mood="bright" type="button" aria-label="甜甜签">
+                <span class="fish-body lilac">
+                  <span class="fish-eye"></span>
+                  <span class="fish-label">甜甜签</span>
+                </span>
+              </button>
+              <button class="fish-tag" data-mood="rest" type="button" aria-label="治愈签">
+                <span class="fish-body sky">
+                  <span class="fish-eye"></span>
+                  <span class="fish-label">治愈签</span>
+                </span>
+              </button>
+            </div>
+            <div class="cat-paw" id="cat-paw" aria-hidden="true">🐾</div>
+          </div>
+        </div>
+
+    </section>
+
+    <section class="section" id="random-area"></section>
+  </main>
+
+  <footer class="footer page">
+    <div class="soft-divider"></div>
+    <p>♡ 今天也要好好吃饭！！ ♡</p>
+  </footer>
+
+  <script src="js/food-data.js"></script>
+  <script src="js/recommend-engine.js"></script>
+  <script>
+    document.querySelector('[data-nav="random"]').classList.add('active');
+
+    const TRIGRAMS = [
+      { symbol: '☰', name: '乾' },
+      { symbol: '☱', name: '兑' },
+      { symbol: '☲', name: '离' },
+      { symbol: '☳', name: '震' },
+      { symbol: '☴', name: '巽' },
+      { symbol: '☵', name: '坎' },
+      { symbol: '☶', name: '艮' },
+      { symbol: '☷', name: '坤' }
+    ];
+    let guaFlightTimer = null;
+
+    const SIGN_META = {
+      abundant: {
+        label: '丰盛签',
+        emoji: '🍚',
+        text: '今天更适合来一顿丰盛、满足、饱饱的饭。可以偏向主食完整、蛋白足、吃完很有幸福感的选择。'
+      },
+      comfort: {
+        label: '暖胃签',
+        emoji: '🍲',
+        text: '今天更适合热乎乎、安稳一点的饭。优先暖胃、清爽、吃完身体舒服的选择。'
+      },
+      fresh: {
+        label: '清爽签',
+        emoji: '🥗',
+        text: '今天适合轻盈一点、清爽一点的饭。优先低油、蔬菜更多、吃完没负担的选择。'
+      },
+      spicy: {
+        label: '解馋签',
+        emoji: '🌶️',
+        text: '今天的随机运气偏向解馋和满足感。可以放纵一点，吃点香辣、浓郁、过瘾的。'
+      },
+      bright: {
+        label: '甜甜签',
+        emoji: '🍰',
+        text: '今天更适合一点甜意和小奖励。可以考虑甜品、下午茶、奶香咖啡或轻松的小食。'
+      },
+      rest: {
+        label: '治愈签',
+        emoji: '☁️',
+        text: '今天更适合温柔、放松、让心情平静下来的吃法。不要太刺激，吃得舒服最重要。'
+      }
+    };
+
+    function escapeHTML(str) {
+      return String(str ?? '').replace(/[&<>"']/g, s => ({
+        '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#039;'
+      }[s]));
+    }
+
+    function initSelectors() {
+      const building = document.getElementById('building-select');
+      const budget = document.getElementById('budget-select');
+      building.innerHTML = (window.BUILDINGS || []).map((b, i) => `<option value="${escapeHTML(b.name)}" ${i === 0 ? 'selected' : ''}>${escapeHTML(b.name)}</option>`).join('');
+      const budgetOptions = (window.STATE_GROUPS.find(g => g.id === 'budget') || { options: [] }).options;
+      budget.innerHTML = budgetOptions
+        .filter(x => ['canteen_15_25', 'extra_25_50', 'reward_50_plus', 'campus_drink_20', 'tea_25_50'].includes(x.id))
+        .map(x => `<option value="${escapeHTML(x.id)}">${escapeHTML(x.emoji + ' ' + x.label)}</option>`).join('');
+    }
+
+    function setPawTarget(targetEl) {
+      const paw = document.getElementById('cat-paw');
+      const board = document.getElementById('fish-board');
+      if (!targetEl || !paw || !board) return;
+      const t = targetEl.getBoundingClientRect();
+      const b = board.getBoundingClientRect();
+      const left = t.left - b.left + t.width * 0.58;
+      const top = t.top - b.top + t.height * 0.2;
+      paw.style.left = `${left}px`;
+      paw.style.top = `${top}px`;
+    }
+
+    function resetFishState() {
+      document.querySelectorAll('.fish-tag').forEach(el => {
+        el.classList.remove('selected');
+      });
+    }
+
+    function startGuaFlight() {
+      const box = document.getElementById('plum-box');
+      const upper = document.getElementById('gua-upper');
+      const lower = document.getElementById('gua-lower');
+      const text = document.getElementById('gua-flight-text');
+      if (!box || !upper || !lower || !text) return;
+      box.classList.add('flying');
+      let step = 0;
+      clearInterval(guaFlightTimer);
+      guaFlightTimer = setInterval(() => {
+        const a = TRIGRAMS[Math.floor(Math.random() * TRIGRAMS.length)];
+        const b = TRIGRAMS[Math.floor(Math.random() * TRIGRAMS.length)];
+        upper.textContent = a.symbol;
+        lower.textContent = b.symbol;
+        text.textContent = step % 2 === 0 ? `卦象上飞：${a.name}与${b.name}正在聚气` : '卦象回旋：梅花落签中…';
+        step += 1;
+      }, 220);
+    }
+
+    function finishGuaFlight(gua, sign) {
+      const box = document.getElementById('plum-box');
+      const upper = document.getElementById('gua-upper');
+      const lower = document.getElementById('gua-lower');
+      const text = document.getElementById('gua-flight-text');
+      clearInterval(guaFlightTimer);
+      if (!box || !upper || !lower || !text) return;
+      box.classList.remove('flying');
+      upper.textContent = gua.upper.symbol;
+      lower.textContent = gua.lower.symbol;
+      text.textContent = `本小时卦象已定，最后落在「${sign.label}」`;
+    }
+
+    function renderRandomCard(x, label) {
+      const item = x.item;
+      const reason = (x.meta.reasons || []).slice(0, 2).join('；') || '和今天抽到的小鱼签氛围相合。';
+      const combo = item.isCombo && Array.isArray(item.items)
+        ? `<div class="combo-parts">${item.items.map(part => `<span>${escapeHTML(part.name)} <b>${escapeHTML(FoodRecommender.formatPrice(part))}</b></span>`).join('')}</div>`
+        : '';
+      return `
+        <article class="result-card">
+          <div class="result-topline">
+            <div>
+              <span class="kicker">${label}</span>
+              <h3 style="margin-top:12px;">${escapeHTML(FoodRecommender.displayName(item))}</h3>
+              <p class="place">${escapeHTML(FoodRecommender.formatPlace(item))}</p>
+            </div>
+            <span class="score">${escapeHTML(FoodRecommender.formatPrice(item))}</span>
+          </div>
+          ${combo}
+          <p class="reason">签语解释：${escapeHTML(reason)}</p>
+          <p class="reason">营业信息：${escapeHTML(item.businessHours || '未填写 / 需现场确认')}</p>
+        </article>`;
+    }
+
+    function startDivination() {
+      const btn = document.getElementById('divine-btn');
+      btn.disabled = true;
+      btn.textContent = '小猫正在抽签…';
+      document.getElementById('random-area').innerHTML = '';
+      document.getElementById('gua-kicker').textContent = '小猫伸爪中';
+      document.getElementById('gua-title').textContent = '小鱼签正在摇一摇，马上就会抓到今天那一支…';
+      document.getElementById('gua-text').textContent = '这一刻的时间，会被翻译成一种适合吃饭的心情。';
+      document.getElementById('plum-meta').textContent = '梅花内签启封中';
+      document.getElementById('plum-main').textContent = '小猫正在把外面的鱼签翻开，看看里面藏着哪一朵梅花。';
+      document.getElementById('plum-verse').textContent = '梅花签意整理中……';
+      document.getElementById('cat-interpret').textContent = '猫咪解签：别急喵，我正在认真读签。';
+      startGuaFlight();
+
+      resetFishState();
+
+      setTimeout(() => {
+        const gua = FoodRecommender.makeMeihuaGua(new Date());
+        const sign = SIGN_META[gua.moodId] || SIGN_META.comfort;
+        const plumMeta = `${gua.timeLabel} · ${gua.upper.symbol} ${gua.upper.name}上 · ${gua.lower.symbol} ${gua.lower.name}下 · 动${gua.movingLine}爻`;
+        const building = document.getElementById('building-select').value;
+        const budget = document.getElementById('budget-select').value;
+        const state = FoodRecommender.randomStateFromGua(building, budget, gua);
+        const groups = FoodRecommender.makeRecommendationGroups(state);
+        const picks = groups.ranked.slice(0, 6);
+        const selectedFish = document.querySelector(`.fish-tag[data-mood="${gua.moodId}"]`) || document.querySelector('.fish-tag');
+        if (selectedFish) {
+          selectedFish.classList.add('selected');
+          setPawTarget(selectedFish);
+        }
+
+        document.getElementById('gua-kicker').textContent = '小猫抽到了这支签';
+        document.getElementById('gua-title').textContent = `${sign.emoji} ${sign.label}`;
+        document.getElementById('gua-text').textContent = '外签已经抽出，下面是内里的梅花签意。';
+        document.getElementById('plum-meta').textContent = plumMeta;
+        document.getElementById('plum-main').textContent = `梅花签意：${gua.text}`;
+        document.getElementById('plum-verse').textContent = `这一签落在「${sign.label}」上，说明今天这一小时的吃饭气质更偏向：${sign.text}`;
+        document.getElementById('cat-interpret').textContent = `猫咪解签：喵，我觉得这一小时里都可以顺着这支${sign.label}来吃——既保留一点随机的惊喜，也尊重你现在的预算和距离。`;
+        finishGuaFlight(gua, sign);
+        document.getElementById('random-area').innerHTML = `
+          <div class="result-section-title">
+            <span class="icon-round" style="width:42px;height:42px;font-size:22px;margin:0;">🐟</span>
+            <div>
+              <h2>今日小鱼签推荐</h2>
+              <p class="subtle">随机推荐也会尊重预算和距离；食堂小菜会优先组合成完整一餐。</p>
+            </div>
+          </div>
+          <div class="result-grid">
+            ${picks.map((x, i) => renderRandomCard(x, i === 0 ? '爪爪首推' : `备选 ${i + 1}`)).join('')}
+          </div>`;
+        btn.disabled = false;
+        btn.textContent = '再抽一支 ✨';
+      }, 1450);
+    }
+
+   document.addEventListener('mouseover', (event) => {
+  const target = event.target.closest('.fish-tag');
+  if (target && !document.getElementById('plum-box').classList.contains('flying')) {
+    setPawTarget(target);
+  }
+});
+
+/* ===== 全页面通用小猫爪 hover 效果 ===== */
+function initGlobalCatPaw() {
+  const paw = document.createElement('div');
+  paw.className = 'global-cat-paw';
+  paw.setAttribute('aria-hidden', 'true');
+  paw.textContent = '🐾';
+  document.body.appendChild(paw);
+
+  const hoverSelector = [
+    'a',
+    'button',
+    'select',
+    '.btn',
+    '.chip',
+    '.result-card',
+    '.oracle-card',
+    '.fish-tag',
+    '.feature-card',
+    '.nav-links a',
+    '.logo'
+  ].join(',');
+
+  function movePawToElement(el) {
+    const rect = el.getBoundingClientRect();
+
+    const left = rect.left + rect.width * 0.82;
+    const top = rect.top + rect.height * 0.18;
+
+    paw.style.left = `${left}px`;
+    paw.style.top = `${top}px`;
+    paw.classList.add('show');
+  }
+
+  document.addEventListener('mouseover', function(event) {
+    const target = event.target.closest(hoverSelector);
+    if (!target) return;
+
+    target.classList.add('random-hover-target');
+    movePawToElement(target);
+  });
+
+  document.addEventListener('mousemove', function(event) {
+    const target = event.target.closest(hoverSelector);
+    if (!target) return;
+
+    const rect = target.getBoundingClientRect();
+    const left = rect.left + rect.width * 0.82;
+    const top = rect.top + rect.height * 0.18;
+
+    paw.style.left = `${left}px`;
+    paw.style.top = `${top}px`;
+  });
+
+  document.addEventListener('mouseout', function(event) {
+    const target = event.target.closest(hoverSelector);
+    if (!target) return;
+
+    const nextTarget = event.relatedTarget;
+    if (nextTarget && target.contains(nextTarget)) return;
+
+    paw.classList.remove('show');
+  });
+
+  document.addEventListener('mousedown', function(event) {
+    const target = event.target.closest(hoverSelector);
+    if (!target) return;
+    paw.classList.add('press');
+  });
+
+  document.addEventListener('mouseup', function() {
+    paw.classList.remove('press');
+  });
+}
+
+initSelectors();
+initGlobalCatPaw();
+  </script>
+</body>
+</html>

@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <link rel="stylesheet" href="css/style.css" />
+  <title>个人中心｜今天该吃什么？</title>
+</head>
+<body>
+  <nav class="nav page">
+  <a class="logo" href="index.html" aria-label="回到首页">
+    <span class="logo-badge">🍜</span>
+    <span>今天该吃什么？</span>
+  </a>
+  <div class="nav-links">
+    <a href="index.html" data-nav="home">首页</a>
+    <a href="status-recommendation.html" data-nav="status">状态推荐</a>
+    <a href="random-recommendation.html" data-nav="random">随机推荐</a>
+    <a href="profile.html" data-nav="profile">个人中心</a>
+  </div>
+</nav>
+  <main class="page">
+    <section class="result-hero">
+      <span class="kicker">💌 个人中心</span>
+      <h1 style="font-size: clamp(38px, 5vw, 62px);">我的吃饭回忆</h1>
+      <p class="lead">这里会放置你的收藏和近期推荐，后续可以继续扩展长期饮食禁忌、健康状况和历史记录，等待建设中。</p>
+    </section>
+    <section class="panel section">
+      <h2>我的收藏</h2>
+      <div id="favorites" class="result-grid" style="margin-top:18px;"></div>
+    </section>
+
+    <section class="panel section">
+      <div class="panel-head">
+        <div>
+          <h2>补充我发现的菜品/餐厅</h2>
+          <p class="subtle">可以把新发现的菜品名、餐厅、价格先存在本机浏览器里，后续也可以导出给小C整理进总表。</p>
+        </div>
+      </div>
+      <div class="table-like">
+        <div class="rule-row"><strong>类型</strong><span><select id="user-food-type"><option value="canteen">校内食堂</option><option value="mall">周边商圈</option></select></span></div>
+        <div class="rule-row"><strong>菜品名/推荐项</strong><span><input class="search-input" id="user-food-name" type="text" placeholder="如：鸡腿饭 / 招牌奶茶 / 到店按餐厅点单" /></span></div>
+        <div class="rule-row"><strong>餐厅/窗口</strong><span><input class="search-input" id="user-food-venue" type="text" placeholder="如：西厅大伙 / 某某餐厅" /></span></div>
+        <div class="rule-row"><strong>所在片区/商圈</strong><span><input class="search-input" id="user-food-area" type="text" placeholder="如：东区 / 新中关购物中心" /></span></div>
+        <div class="rule-row"><strong>价格</strong><span><input class="search-input" id="user-food-price" type="number" min="0" step="0.1" placeholder="如：18" /></span></div>
+        <div class="rule-row"><strong>补充备注</strong><span><input class="search-input" id="user-food-note" type="text" placeholder="口味、分量、是否适合单独成餐等" /></span></div>
+      </div>
+      <div class="actions" style="margin-top:18px;">
+        <button class="btn btn-primary" onclick="saveUserFoodFromForm()">保存补充 ✨</button>
+        <button class="btn btn-secondary" onclick="exportUserFoods()">导出补充 CSV</button>
+      </div>
+      <div id="user-food-list" class="result-grid" style="margin-top:18px;"></div>
+    </section>
+  </main>
+  <footer class="footer page">
+  <div class="soft-divider"></div>
+  <p>♡ 今天也要好好吃饭！！ ♡</p>
+</footer>
+  <script src="js/food-data.js"></script>
+  <script src="js/recommend-engine.js"></script>
+  <script>
+    document.querySelector('[data-nav="profile"]').classList.add('active');
+    function escapeHTML(str) {
+      return String(str ?? '').replace(/[&<>"']/g, s => ({
+        '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#039;'
+      }[s]));
+    }
+    const favs = FoodRecommender.readFavorites();
+    document.getElementById('favorites').innerHTML = favs.length
+      ? favs.map(item => `
+        <article class="result-card">
+          <span class="kicker">${item.type === 'canteen' ? '校内食堂' : '周边商圈'}</span>
+          <h3 style="margin-top:12px;">${escapeHTML(FoodRecommender.displayName(item))}</h3>
+          <p class="place">${escapeHTML(FoodRecommender.formatPlace(item))}</p>
+          <span class="price-pill">${escapeHTML(FoodRecommender.formatPrice(item))}</span>
+          <p class="reason">${escapeHTML(item.mood || item.scene || '已收藏。')}</p>
+        </article>
+      `).join('')
+      : '<div class="panel empty" style="grid-column:1/-1;"><h2>还没有收藏</h2><p class="subtle">在推荐结果页点“收藏 ♡”后，会显示在这里。</p></div>';
+
+
+    function userFoodCard(item) {
+      return `
+        <article class="result-card">
+          <span class="kicker">${item.type === 'canteen' ? '校内食堂' : '周边商圈'} · 用户补充</span>
+          <h3 style="margin-top:12px;">${escapeHTML(FoodRecommender.displayName(item))}</h3>
+          <p class="place">${escapeHTML(FoodRecommender.formatPlace(item))}</p>
+          <span class="price-pill">${escapeHTML(FoodRecommender.formatPrice(item))}</span>
+          <p class="reason">${escapeHTML(item.note || item.manualNote || '已保存到本机浏览器。')}</p>
+          <button class="small-btn" onclick="deleteUserFood('${item.id}')">删除这条</button>
+        </article>
+      `;
+    }
+
+    function renderUserFoods() {
+      const list = FoodRecommender.readUserFoodItems();
+      document.getElementById('user-food-list').innerHTML = list.length
+        ? list.map(userFoodCard).join('')
+        : '<div class="panel empty" style="grid-column:1/-1;"><h2>还没有补充记录</h2><p class="subtle">在上面填一条，之后搜索和推荐都会把它一起纳入候选。</p></div>';
+    }
+
+    function saveUserFoodFromForm() {
+      const item = FoodRecommender.saveUserFoodItem({
+        type: document.getElementById('user-food-type').value,
+        name: document.getElementById('user-food-name').value,
+        venue: document.getElementById('user-food-venue').value,
+        area: document.getElementById('user-food-area').value,
+        price: document.getElementById('user-food-price').value,
+        note: document.getElementById('user-food-note').value
+      });
+      if (!item) {
+        alert('至少填写菜品名或餐厅/窗口名');
+        return;
+      }
+      ['user-food-name','user-food-venue','user-food-area','user-food-price','user-food-note'].forEach(id => document.getElementById(id).value = '');
+      renderUserFoods();
+    }
+
+    function deleteUserFood(id) {
+      FoodRecommender.deleteUserFoodItem(id);
+      renderUserFoods();
+    }
+
+    function exportUserFoods() {
+      const list = FoodRecommender.readUserFoodItems();
+      if (!list.length) {
+        alert('目前还没有可以导出的补充记录');
+        return;
+      }
+      const headers = ['类型','片区/商圈','楼层','餐厅/窗口','菜品名/对象名','价格','备注'];
+      const rows = list.map(item => [
+        item.type === 'canteen' ? '校内食堂' : '周边商圈',
+        item.area || '', item.floor || '', item.venue || '', item.name || '', item.priceText || '', item.note || ''
+      ]);
+      const csv = [headers, ...rows]
+        .map(row => row.map(cell => `"${String(cell ?? '').replace(/"/g, '""')}"`).join(','))
+        .join('\n');
+      const blob = new Blob(['\ufeff' + csv], { type: 'text/csv;charset=utf-8;' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = '我的菜品补充.csv';
+      a.click();
+      URL.revokeObjectURL(url);
+    }
+
+    renderUserFoods();
+  </script>
+</body>
+</html>

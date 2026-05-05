@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <link rel="stylesheet" href="css/style.css" />
+  <title>搜索结果｜今天该吃什么？</title>
+</head>
+<body>
+  <nav class="nav page">
+  <a class="logo" href="index.html" aria-label="回到首页">
+    <span class="logo-badge">🍜</span>
+    <span>今天该吃什么？</span>
+  </a>
+  <div class="nav-links">
+    <a href="index.html" data-nav="home">首页</a>
+    <a href="status-recommendation.html" data-nav="status">状态推荐</a>
+    <a href="random-recommendation.html" data-nav="random">随机推荐</a>
+    <a href="profile.html" data-nav="profile">个人中心</a>
+  </div>
+</nav>
+
+  <main class="page">
+    <section class="result-hero">
+      <span class="kicker">🔎 关键词搜索</span>
+      <h1 style="font-size: clamp(38px, 5vw, 62px);">搜索结果</h1>
+      <p class="lead" id="lead">正在搜索。</p>
+      <div class="search-card" style="margin-top:20px;">
+        <input class="search-input" id="search-keyword" type="text" placeholder="输入关键词，如：饺子 / 米线 / 沙拉 / 咖啡" />
+        <button class="btn btn-primary" onclick="doSearch()">搜索</button>
+      </div>
+    </section>
+
+    <section id="results-area" class="section"></section>
+  </main>
+
+  <footer class="footer page">
+  <div class="soft-divider"></div>
+  <p>♡ 今天也要好好吃饭！！ ♡</p>
+</footer>
+
+  <script src="js/food-data.js"></script>
+  <script src="js/recommend-engine.js"></script>
+  <script>
+    document.querySelector('[data-nav="home"]').classList.add('active');
+
+    function escapeHTML(str) {
+      return String(str ?? '').replace(/[&<>"']/g, s => ({
+        '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#039;'
+      }[s]));
+    }
+
+    function itemTags(item) {
+      return [item.foodType, item.taste, item.health, item.mood, item.scene, item.priceLevel]
+        .filter(Boolean)
+        .flatMap(x => String(x).split(/[;；、/,，|｜]/))
+        .map(x => x.trim())
+        .filter(Boolean)
+        .slice(0, 7);
+    }
+
+    function renderCard(x) {
+      const item = x.item;
+      const reason = (x.meta.reasons || []).join('；') || '命中关键词。';
+      return `
+        <article class="result-card">
+          <div class="result-topline">
+            <div>
+              <span class="kicker">${item.type === 'canteen' ? '校内食堂' : '周边商圈'}</span>
+              <h3 style="margin-top:12px;">${escapeHTML(FoodRecommender.displayName(item))}</h3>
+              <p class="place">${escapeHTML(FoodRecommender.formatPlace(item))}</p>
+            </div>
+            <span class="score">${x.meta.finalScore}分</span>
+          </div>
+          <span class="price-pill">${escapeHTML(FoodRecommender.formatPrice(item))}</span>
+          <div class="tags">${itemTags(item).map(t => `<span class="tag">${escapeHTML(t)}</span>`).join('')}</div>
+          <p class="reason">${escapeHTML(reason)}</p>
+        </article>
+      `;
+    }
+
+    function doSearch() {
+      const keyword = document.getElementById('search-keyword').value.trim();
+      if (!keyword) return;
+      localStorage.setItem('searchKeyword', keyword);
+      render();
+    }
+
+    function render() {
+      const keyword = localStorage.getItem('searchKeyword') || '';
+      document.getElementById('search-keyword').value = keyword;
+      const results = FoodRecommender.searchFoodByKeyword(keyword);
+      document.getElementById('lead').textContent = keyword
+        ? `关键词「${keyword}」共匹配到 ${results.length} 条结果。`
+        : '请输入关键词开始搜索。';
+
+      document.getElementById('results-area').innerHTML = results.length
+        ? `<div class="result-grid">${results.slice(0, 24).map(renderCard).join('')}</div>`
+        : `<div class="panel empty"><h2>没有找到相关食物</h2><p class="subtle">可以换一个更宽泛的词，比如“面”“鸡”“咖啡”。</p></div>`;
+    }
+
+    document.getElementById('search-keyword').addEventListener('keydown', e => {
+      if (e.key === 'Enter') doSearch();
+    });
+
+    render();
+  </script>
+</body>
+</html>

@@ -1,0 +1,235 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <link rel="stylesheet" href="css/style.css" />
+  <title>状态推荐｜今天该吃什么？</title>
+</head>
+<body>
+  <nav class="nav page">
+  <a class="logo" href="index.html" aria-label="回到首页">
+    <span class="logo-badge">🍜</span>
+    <span>今天该吃什么？</span>
+  </a>
+  <div class="nav-links">
+    <a href="index.html" data-nav="home">首页</a>
+    <a href="status-recommendation.html" data-nav="status">状态推荐</a>
+    <a href="random-recommendation.html" data-nav="random">随机推荐</a>
+    <a href="profile.html" data-nav="profile">个人中心</a>
+  </div>
+</nav>
+
+  <main class="page">
+    <section class="result-hero">
+      <span class="kicker">🧁 今日状态采集</span>
+      <h1 style="font-size: clamp(38px, 5vw, 62px);">关于吃饭，是一件值得思考的大事……</h1>
+      <p class="lead">你选的每一个状态，小C都会替你好好记下，然后去寻找数据库里最适合的一餐。</p>
+    </section>
+
+    <section class="form-layout section">
+      <div class="form-card panel" id="form-area">
+        <div class="group">
+          <p class="group-label">📍 此时此刻我在：</p>
+          <select id="building-select"></select>
+          <p class="subtle" id="building-hint">选择楼宇后，结果会优先排序最近的食堂片区和商圈。</p>
+        </div>
+
+        <div id="state-groups"></div>
+      </div>
+
+      <aside class="side-sticky">
+        <div class="summary-card">
+          <h3>🍱 当前选择</h3>
+          <p class="subtle">生成推荐前你可以在这里调整不同的权重，结果也会有所差异哦！</p>
+          <div class="mini-list" id="selected-summary"></div>
+          <div class="soft-divider"></div>
+          <h3>⚖️ 权重设置</h3>
+          <div id="weights"></div>
+          <button class="btn btn-primary" style="width:100%; margin-top:18px;" onclick="submitState()">生成我的推荐 ✨</button>
+          <button class="btn btn-secondary" style="width:100%; margin-top:10px;" onclick="resetState()">重新选择</button>
+        </div>
+      </aside>
+    </section>
+  </main>
+
+  <footer class="footer page">
+  <div class="soft-divider"></div>
+  <p>♡ 今天也要好好吃饭！！ ♡</p>
+</footer>
+  <div class="toast" id="toast">已经保存此刻的状态啦</div>
+
+  <script src="js/food-data.js"></script>
+  <script src="js/recommend-engine.js"></script>
+  <script>
+    document.querySelector('[data-nav="status"]').classList.add('active');
+
+    const state = {
+      building: "",
+      body: [],
+      hunger: "",
+      scene: "",
+      budget: "canteen_15_25",
+      preference: [],
+      time: "lunch",
+      weights: Object.assign({}, window.DEFAULT_WEIGHTS)
+    };
+
+    function initBuildingSelect() {
+      const select = document.getElementById('building-select');
+      select.innerHTML = (window.BUILDINGS || []).map((b, idx) => `
+        <option value="${b.name}" ${idx === 0 ? 'selected' : ''}>${b.name}</option>
+      `).join('');
+      state.building = select.value;
+      select.addEventListener('change', () => {
+        state.building = select.value;
+        updateBuildingHint();
+        updateSummary();
+      });
+      updateBuildingHint();
+    }
+
+    function updateBuildingHint() {
+      const b = FoodRecommender.getBuildingInfo(state.building);
+      const hint = document.getElementById('building-hint');
+      if (!b) return;
+      hint.textContent = `校内优先：${b.campusPrimary}；校内备选：${b.campusSecondary}；校外优先：${b.mallPrimary}；校外备选：${b.mallSecondary}。`;
+    }
+
+    function renderGroups() {
+      const container = document.getElementById('state-groups');
+      container.innerHTML = window.STATE_GROUPS.map(group => `
+        <div class="group">
+          <p class="group-label">${group.title}</p>
+          <div class="chip-grid">
+            ${group.options.map(opt => `
+              <button type="button" class="option" data-group="${group.id}" data-id="${opt.id}">
+                <span>${opt.emoji}</span><span>${opt.label}</span>
+              </button>
+            `).join('')}
+          </div>
+        </div>
+      `).join('');
+
+      document.querySelectorAll('.option').forEach(btn => {
+        btn.addEventListener('click', () => toggleOption(btn));
+      });
+
+      // 默认值
+      setActive('budget', 'canteen_15_25', true);
+      setActive('time', 'lunch', true);
+
+      const quick = new URLSearchParams(location.search).get('quick');
+      if (quick && window.STATE_RULES[quick]) {
+        const quickBtn = document.querySelector(`.option[data-id="${quick}"]`);
+        if (quickBtn) toggleOption(quickBtn);
+      }
+      updateSummary();
+    }
+
+    function setActive(group, id, on) {
+      const btn = document.querySelector(`.option[data-group="${group}"][data-id="${id}"]`);
+      if (btn) btn.classList.toggle('active', on);
+    }
+
+    function toggleOption(btn) {
+      const group = btn.dataset.group;
+      const id = btn.dataset.id;
+      const config = window.STATE_GROUPS.find(g => g.id === group);
+
+      if (config.multi) {
+        const arr = state[group] || [];
+        if (arr.includes(id)) {
+          state[group] = arr.filter(x => x !== id);
+          btn.classList.remove('active');
+        } else {
+          state[group] = [...arr, id];
+          btn.classList.add('active');
+        }
+      } else {
+        document.querySelectorAll(`.option[data-group="${group}"]`).forEach(x => x.classList.remove('active'));
+        state[group] = id;
+        btn.classList.add('active');
+      }
+      updateSummary();
+    }
+
+    function optionLabel(id) {
+      for (const group of window.STATE_GROUPS) {
+        const opt = group.options.find(o => o.id === id);
+        if (opt) return `${opt.emoji} ${opt.label}`;
+      }
+      return id;
+    }
+
+    function updateSummary() {
+      const labels = [];
+      labels.push(`📍 最近楼宇：${state.building || '未选择'}`);
+      ['body','hunger','scene','budget','preference','time'].forEach(group => {
+        const value = state[group];
+        if (Array.isArray(value)) {
+          if (value.length) labels.push(...value.map(optionLabel));
+        } else if (value) {
+          labels.push(optionLabel(value));
+        }
+      });
+      document.getElementById('selected-summary').innerHTML = labels.length
+        ? labels.map(x => `<div class="mini">${x}</div>`).join('')
+        : '<div class="mini">还没有选择状态</div>';
+    }
+
+    function renderWeights() {
+      const names = {
+        body: '身体状态',
+        hunger: '饿的程度',
+        scene: '吃饭场景',
+        distance: '距离',
+        budget: '预算',
+        preference: '饮食偏好',
+        novelty: '重复厌倦'
+      };
+      document.getElementById('weights').innerHTML = Object.entries(state.weights).map(([key, value]) => `
+        <div class="weight-row">
+          <label>${names[key] || key}</label>
+          <input type="range" min="0" max="40" value="${value}" data-weight="${key}">
+          <strong id="weight-${key}">${value}%</strong>
+        </div>
+      `).join('');
+      document.querySelectorAll('[data-weight]').forEach(input => {
+        input.addEventListener('input', () => {
+          state.weights[input.dataset.weight] = Number(input.value);
+          document.getElementById(`weight-${input.dataset.weight}`).textContent = `${input.value}%`;
+        });
+      });
+    }
+
+    function submitState() {
+      if (!state.building) {
+        alert('请先选择你离哪个楼最近');
+        return;
+      }
+      localStorage.setItem('todayFoodState', JSON.stringify({
+        ...state,
+        createdAt: new Date().toISOString()
+      }));
+      showToast();
+      setTimeout(() => location.href = 'recommendation-result.html', 260);
+    }
+
+    function resetState() {
+      localStorage.removeItem('todayFoodState');
+      location.href = 'status-recommendation.html';
+    }
+
+    function showToast() {
+      const toast = document.getElementById('toast');
+      toast.classList.add('show');
+      setTimeout(() => toast.classList.remove('show'), 1200);
+    }
+
+    initBuildingSelect();
+    renderGroups();
+    renderWeights();
+  </script>
+</body>
+</html>

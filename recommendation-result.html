@@ -1,0 +1,231 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <link rel="stylesheet" href="css/style.css" />
+  <title>推荐结果｜今天该吃什么？</title>
+</head>
+<body>
+  <nav class="nav page">
+  <a class="logo" href="index.html" aria-label="回到首页">
+    <span class="logo-badge">🍜</span>
+    <span>今天该吃什么？</span>
+  </a>
+  <div class="nav-links">
+    <a href="index.html" data-nav="home">首页</a>
+    <a href="status-recommendation.html" data-nav="status">状态推荐</a>
+    <a href="random-recommendation.html" data-nav="random">随机推荐</a>
+    <a href="profile.html" data-nav="profile">个人中心</a>
+  </div>
+</nav>
+
+  <main class="page">
+    <section class="result-hero">
+      <span class="kicker">✨ 推荐结果</span>
+      <h1 style="font-size: clamp(38px, 5vw, 62px);">替你想好啦！</h1>
+      <p class="lead" id="result-lead">正在根据你的状态和小C数据库生成推荐ing</p>
+      <div class="result-toolbar">
+        <a class="btn btn-secondary" href="status-recommendation.html">重新选择状态</a>
+        <button class="btn btn-green" onclick="rerender()">换一批看看</button>
+        <a class="btn btn-secondary" href="index.html">回到首页</a>
+      </div>
+    </section>
+
+    <section class="summary-card section" id="state-summary"></section>
+
+    <section class="section" id="results-area"></section>
+
+    <section class="panel section">
+      <div class="panel-head">
+        <div>
+          <h2>这套算法怎么匹配？</h2>
+          <p class="subtle">核心不是随机，而是“状态按钮 → 标签规则 → Excel 菜品字段 → 加权排序”。</p>
+        </div>
+      </div>
+      <div class="table-like">
+        <div class="rule-row"><strong>身体状态</strong><span>匹配辣度、油腻度、饱腹感，以及健康倾向、情绪标签、适合场景。</span></div>
+        <div class="rule-row"><strong>楼宇距离</strong><span>优先你附近的校内首选片区，其次是备选片区；校外则按最近商圈和备选商圈加分。</span></div>
+        <div class="rule-row"><strong>预算</strong><span>已按你的要求改成：食堂正餐 15–25 元、加餐/普通校外 25–50 元、奖励自己 50 元以上、校内饮品 20 元以内、下午茶/甜品咖啡 25–50 元。食堂小菜不会单独作为一餐，会自动组合成“米饭/主食 + 荤菜/蛋白 + 素菜”的堂食方案。</span></div>
+        <div class="rule-row"><strong>禁忌</strong><span>“清真优先”会主动排除含猪肉相关标签并优先清真窗口；“肉多多！！”会重点提高肉类和高蛋白选择的排序。</span></div>
+      </div>
+    </section>
+  </main>
+
+  <footer class="footer page">
+  <div class="soft-divider"></div>
+  <p>♡ 让每一次吃饭都更轻松一点 ♡</p>
+</footer>
+  <div class="toast" id="toast">已收藏</div>
+
+  <script src="js/food-data.js"></script>
+  <script src="js/recommend-engine.js"></script>
+  <script>
+    document.querySelector('[data-nav="status"]').classList.add('active');
+
+    let shuffleSeed = 0;
+
+    function getState() {
+      const raw = localStorage.getItem('todayFoodState');
+      if (raw) {
+        try { return JSON.parse(raw); } catch(e) {}
+      }
+      return {
+        building: (window.BUILDINGS && window.BUILDINGS[0] && window.BUILDINGS[0].name) || '',
+        body: ['hot_food'],
+        hunger: 'normal',
+        scene: 'solo',
+        budget: 'canteen_15_25',
+        preference: [],
+        time: 'lunch',
+        weights: Object.assign({}, window.DEFAULT_WEIGHTS)
+      };
+    }
+
+    function itemTags(item) {
+      const source = item.isCombo && Array.isArray(item.items)
+        ? item.items.flatMap(x => [x.foodType, x.taste, x.health, x.mood, x.scene, x.priceLevel])
+        : [item.foodType, item.taste, item.health, item.mood, item.scene, item.priceLevel];
+      return source
+        .filter(Boolean)
+        .flatMap(x => String(x).split(/[;；、/,，|｜]/))
+        .map(x => x.trim())
+        .filter(Boolean)
+        .filter((x, i, arr) => arr.indexOf(x) === i)
+        .slice(0, 7);
+    }
+
+    function renderComboParts(item) {
+      if (!item.isCombo || !Array.isArray(item.items)) return '';
+      return `
+        <div class="combo-parts">
+          ${item.items.map(part => `<span>${escapeHTML(part.name)} <b>${escapeHTML(FoodRecommender.formatPrice(part))}</b></span>`).join('')}
+        </div>
+      `;
+    }
+
+    function renderCard(x, rankLabel) {
+      const item = x.item;
+      const meta = x.meta;
+      const reason = (meta.reasons || []).slice(0, 3).join('；') || '与当前状态匹配度较高。';
+      return `
+        <article class="result-card">
+          <div class="result-topline">
+            <div>
+              <span class="kicker">${rankLabel}</span>
+              <h3 style="margin-top:12px;">${escapeHTML(FoodRecommender.displayName(item))}</h3>
+              <p class="place">${escapeHTML(FoodRecommender.formatPlace(item))}</p>
+            </div>
+            <span class="score">${meta.finalScore}分</span>
+          </div>
+          <span class="price-pill">${escapeHTML(FoodRecommender.formatPrice(item))}</span>
+          <div class="tags">
+            ${itemTags(item).map(t => `<span class="tag">${escapeHTML(t)}</span>`).join('')}
+          </div>
+          ${renderComboParts(item)}
+          <p class="reason">推荐理由：${escapeHTML(reason)}</p>
+          <p class="reason">营业信息：${escapeHTML(item.businessHours || '未填写 / 需现场确认')}</p>
+          <div class="card-footer">
+            <span class="subtle">${item.type === 'mall' ? '周边商圈' : '校内食堂'}</span>
+            <button class="small-btn" onclick="favorite('${item.id}')">${item.isCombo ? '记下搭配 ♡' : '收藏 ♡'}</button>
+          </div>
+        </article>
+      `;
+    }
+
+    function renderGroup(title, desc, list, emoji) {
+      if (!list || !list.length) return '';
+      return `
+        <div class="result-section-title">
+          <span class="icon-round" style="width:42px;height:42px;font-size:22px;margin:0;">${emoji}</span>
+          <div>
+            <h2>${title}</h2>
+            <p class="subtle">${desc}</p>
+          </div>
+        </div>
+        <div class="result-grid">
+          ${list.map((x, i) => renderCard(x, `TOP ${i + 1}`)).join('')}
+        </div>
+      `;
+    }
+
+    function renderStateSummary(state, groups) {
+      const labels = FoodRecommender.getRuleLabels(state);
+      const building = FoodRecommender.getBuildingInfo(state.building);
+      const budget = FoodRecommender.budgetLabel(state.budget);
+      const count = FoodRecommender.allFoodItems().length;
+      document.getElementById('result-lead').textContent = `已从 ${count} 条菜品/餐厅记录里，按你的位置、状态、预算和偏好进行排序。`;
+
+      document.getElementById('state-summary').innerHTML = `
+        <div class="panel-head">
+          <div>
+            <h2>你的今日状态</h2>
+            <p class="subtle">最近楼宇：${escapeHTML(state.building || '未选择')}；预算：${escapeHTML(budget)}。</p>
+          </div>
+          <span class="kicker">候选记录：${groups.ranked.length} 条</span>
+        </div>
+        <div class="chip-grid">
+          ${labels.map(x => `<span class="chip active">${escapeHTML(x)}</span>`).join('') || '<span class="chip">未选择具体状态，已使用默认午餐状态</span>'}
+        </div>
+        ${building ? `<p class="subtle" style="margin-top:14px;">距离规则：校内优先「${escapeHTML(building.campusPrimary)}」，备选「${escapeHTML(building.campusSecondary)}」；校外优先「${escapeHTML(building.mallPrimary)}」，备选「${escapeHTML(building.mallSecondary)}」。</p>` : ''}
+      `;
+    }
+
+    function renderResults() {
+      const state = getState();
+      const groups = FoodRecommender.makeRecommendationGroups(state);
+
+      // “换一批”时轻微轮换同分附近项目，但不改变底层打分逻辑。
+      if (shuffleSeed > 0) {
+        ['steady', 'balanced', 'treat'].forEach(key => {
+          const arr = groups[key];
+          if (arr.length > 1) {
+            const first = arr.shift();
+            arr.push(first);
+          }
+        });
+      }
+
+      renderStateSummary(state, groups);
+
+      if (!groups.ranked.length) {
+        document.getElementById('results-area').innerHTML = `
+          <div class="panel empty">
+            <h2>暂时没有匹配到很合适的结果</h2>
+            <p class="subtle">可以放宽预算、减少禁忌，或者换一个楼宇位置再试一次。</p>
+            <a class="btn btn-primary" href="status-recommendation.html">重新选择</a>
+          </div>
+        `;
+        return;
+      }
+
+      document.getElementById('results-area').innerHTML = [
+        renderGroup('最稳妥推荐', '最符合当前状态，同时优先考虑距离近、价格稳、执行成本低。', groups.steady, '🍚'),
+        renderGroup('折中推荐', '在健康、口味、便利之间做平衡，不会太冒险。', groups.balanced, '🥗'),
+        renderGroup('满足感推荐', '适合今天想放松一下、奖励自己或者和朋友慢慢吃。', groups.treat, '🍰')
+      ].join('');
+    }
+
+    function favorite(id) {
+      FoodRecommender.saveFavorite(id);
+      const toast = document.getElementById('toast');
+      toast.classList.add('show');
+      setTimeout(() => toast.classList.remove('show'), 1100);
+    }
+
+    function rerender() {
+      shuffleSeed++;
+      renderResults();
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    function escapeHTML(str) {
+      return String(str ?? '').replace(/[&<>"']/g, s => ({
+        '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#039;'
+      }[s]));
+    }
+
+    renderResults();
+  </script>
+</body>
+</html>
